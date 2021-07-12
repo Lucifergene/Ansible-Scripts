@@ -1,0 +1,59 @@
+---
+- name: Install JFrog and Java via Ansible
+  hosts: all
+  become: true
+  tasks:
+    - name: Update packages list
+      apt:
+        name: "*"
+        state: latest
+        update_cache: yes
+
+    - name: Upgrade all installed packages
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400
+
+    - name: Install Java using Ansible
+      become: yes
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+           - openjdk-11-jdk
+
+    - name: Add an Apt signing key
+      ansible.builtin.apt_key:
+        url: https://api.bintray.com/orgs/jfrog/keys/gpg/public.key
+        state: present
+
+
+    - name: Add specified repository into sources list
+      ansible.builtin.apt_repository:
+        repo: deb https://jfrog.bintray.com/artifactory-debs bionic main
+        state: present
+
+    - name: Update packages list
+      apt:
+        name: "*"
+        state: latest
+        update_cache: yes
+
+    - name: Install jfrog using Ansible
+      become: yes
+      apt:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+           - jfrog-artifactory-oss
+		   
+	
+    - name: Enable service artifactory
+      ansible.builtin.systemd:
+        state: started
+        name: artifactory.service
+        enabled: yes
+
